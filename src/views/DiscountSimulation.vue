@@ -16,33 +16,7 @@ export default {
       }
     },
     created: function() {
-      let result = [this.singleCoupons.length]
-      // reulst[] = {i,i,i, calc}
-      for(let i = 0; i < this.singleCoupons; i++) {
-        result[i] = {
-          singleIndex: i,
-          doubleIndex: -1,
-          basketInex: -1,
-          calc: this.product[0] - this.singleCoupons[i]
-        }
-      }
       
-      let minObj = { 
-        singleIndex: -1,
-        doubleIndex: -1,
-        basketInex: -1,
-        calc: Number.MAX_SAFE_INTEGER
-        };
-
-      for(let i = 0; i < result.length; i ++) {
-        if (result[i].calc < minObj[0].calc) {
-          minObj.shift(result[i])
-        } else {
-          
-        }
-      }
-
-      console.log(minObj)
     }
 }
 </script>

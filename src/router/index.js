@@ -2,7 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import CouponSimulation from '../views/CouponSimulation.vue'
 import LogicSimulation from '../views/LogicSimulation.vue'
-
+import DiscountSimulation from '../views/DiscountSimulation.vue'
 
 const routes = [
   {
@@ -27,6 +27,11 @@ const routes = [
     path: '/logic-simulation',
     name: 'logicSimulation',
     component: LogicSimulation
+  },
+  {
+    path: '/discount-simulation',
+    name: 'discountSimulation',
+    component: DiscountSimulation
   },
 ]
 

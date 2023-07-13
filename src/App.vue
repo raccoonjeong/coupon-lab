@@ -2,8 +2,9 @@
   <nav>
     <router-link to="/">Home</router-link> |
     <router-link to="/about">About</router-link> |
-    <router-link to="/coupon-simulation">CouponSimulation</router-link>
-    <router-link to="/logic-simulation">LogicSimulation</router-link>
+    <router-link to="/coupon-simulation">CouponSimulation</router-link> | 
+    <router-link to="/logic-simulation">LogicSimulation</router-link> | 
+    <router-link to="/discount-simulation">DiscountSimulation</router-link>
   </nav>
   <router-view/>
 </template>

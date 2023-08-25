@@ -157,19 +157,19 @@ export default {
         // const N3 = 5;
         // const R = 5;
 
-        const permutationsOrCombinations = function(N, R) {
+        const countPermutationsOrCombinations = function(N, R) {
           if (N < R) {
-            return permutate(R, N);
+            return countPermutations(R, N); // 물건 3개중 쿠폰 먹일 2개를 뽑아서 나열 (순서가 있음. 123 != 321).. 후에 x 2를 해야 하지 않을까..?
           } else {
-            return combinate(N, R);
+            return countPermutations(N, R); // 쿠폰 3장중 물건에 적용할 2장을 뽑아서 나열 (순서가 있음. 123 != 321)
           }
         }
 
-        const combinate = function(N, R) {
-          return factorial(N) / (factorial(R) * factorial(N - R))
-        }
+        // const countCombinations = function(N, R) {
+        //   return factorial(N) / (factorial(R) * factorial(N - R))
+        // }
         
-        const permutate = function(N, R) {
+        const countPermutations = function(N, R) {
           return factorial(N) / factorial(N - R);
         }
 
@@ -184,52 +184,126 @@ export default {
           return number * factorial(number - 1);
         }
 
-        this.caseNumber = permutationsOrCombinations(N1, R) * permutationsOrCombinations(N2, R) * factorial(N3);
+        this.caseNumber = countPermutationsOrCombinations(N1, R) * countPermutationsOrCombinations(N2, R) * factorial(N3);
       },
-      
+      getCombinations: function(N, R) {
+        // N: 쿠폰 수, R: 상품 수
+        // N개의 상품단수쿠폰중에서 R개의 상품 수 만큼의 경우의 수 뽑는다. 순서상관없이. (1,2 == 2,1)
+        const data = [1,2]; // N개 (쿠폰 수)
+        let res = [];
+        let visit = [false, false]; // N개 ? 쿠폰 수?
+        let count = 0;
+        
+        const combinate = (N, R, depth, start) => {
+          if (depth === R) {
+            console.log('combinate res: ' + res);
+            count++;
+            return;
+          }
+
+          for (let i = start; i < N; i++) {
+              if (visit[i] == false) {
+                  visit[i] = true;
+                  res[depth] = data[i];
+                  combinate(N, R, depth + 1, i);
+                  visit[i] = false;
+              }
+          }
+        }
+
+        combinate(N, R, 0, 0);
+        console.log('combinate count: ' + count);
+      },
+      getPermutations: function(N, R) {
+        const data = [1,2]; // N개 (쿠폰 수)
+        let res = [];
+        let visit = [false, false]; // N개 ? 쿠폰 수?
+        let count = 0;
+        const permutate = (N, R, depth) => {
+          console.log(N, R, depth);
+          if (depth == R) {
+              console.log('permutate res:' + res);
+              count++;
+              return;
+          }
+
+          for (let i = 0; i < N; i++) {
+              if (visit[i] == false) {
+                  visit[i] = true;
+                  res[depth] = data[i];
+                  permutate(N, R, depth + 1);
+                  visit[i] = false;
+              }
+          }
+        }
+        permutate(N, R, 0);
+        console.log('permutate count: ' + count);
+      },
+      getPermutationsForProduct: function(N, R, step) {
+        console.log('step ' + step + ' start!!!!')
+        // this.singleCoupons; // const data = [1,2]; // N개 (쿠폰 수)
+        // this.products[0].selectedSigleCoupon; // let res = [];
+        let visit = [false, false]; // N개 ? 쿠폰 수?
+        let count = 0;
+        const permutate = (N, R, depth, step) => {
+          // console.log(N, R, depth);
+          if (depth == R) {
+            if (step === 'S') {
+              console.log('permutate res:' + this.products.map(prd => prd.selectedSigleCoupon.cpnNm));
+              this.getPermutationsForProduct(2,2, 'D');
+            }
+            if (step === 'D') {
+              console.log('permutate res:' + this.products.map(prd => prd.selectedDoubleCoupon.cpnNm));
+            }
+            count++;
+            return;
+          }
+
+          for (let i = 0; i < N; i++) {
+              if (visit[i] == false) {
+                  visit[i] = true;
+                  if (step === 'S') {
+                    this.products[depth].selectedSigleCoupon = this.singleCoupons[i];
+                  }
+                  if (step === 'D') {
+                    this.products[depth].selectedDoubleCoupon = this.doubleCoupons[i];
+                  }
+                  permutate(N, R, depth + 1, step);
+                  visit[i] = false;
+              }
+          }
+        }
+        permutate(N, R, 0, step);
+        console.log('permutate count: ' + count);
+      },
       applyProductCoupons: function() {
         this.singleCoupons.forEach(cpn => cpn.selected = false);
         this.doubleCoupons.forEach(cpn => cpn.selected = false);
 
         this.products.forEach(prd => {
-          // if (!prd.selectedSigleCoupon || prd.selectedSigleCoupon == {}) {
-          //   return;
-          // }
           prd.selectedSigleCoupon.selected = true;
           prd.selectedDoubleCoupon.selected = true;
 
           prd.selPrcAppliedBenefit = prd.selPrc;
-          prd.singleBenefit = 0;
-          prd.doubleBenefit = 0;
-          // 단수쿠폰
-          // 정률
-          if (prd.selectedSigleCoupon.cpnType === '01') {
-            prd.singleBenefit += prd.selPrc * prd.selectedSigleCoupon.dscRt / 100;
-          }
 
-          // 정액
-          if (prd.selectedSigleCoupon.cpnType === '02') {
-            prd.singleBenefit += prd.selectedSigleCoupon.dscRt > prd.selPrc ? prd.selPrc : prd.selectedSigleCoupon.dscRt;
-          }
+          prd.singleBenefit = this.calculateBenefit(prd.selPrc, prd.selectedSigleCoupon);
+          prd.doubleBenefit = this.calculateBenefit(prd.selPrcAppliedBenefit, prd.selectedDoubleCoupon);
+
           prd.selPrcAppliedBenefit -= prd.singleBenefit;
-
-          // if (!prd.selectedDoubleCoupon || prd.selectedDoubleCoupon == {}) {
-          //   return;
-          // }
-          // 복수쿠폰
-          // 정률
-          if (prd.selectedDoubleCoupon.cpnType === '01') {
-            prd.doubleBenefit = prd.selPrcAppliedBenefit * prd.selectedDoubleCoupon.dscRt / 100;
-          }
-
-          // 정액
-          if (prd.selectedDoubleCoupon.cpnType === '02') {
-            prd.doubleBenefit = prd.selectedDoubleCoupon.dscRt > prd.selPrcAppliedBenefit ? prd.selPrcAppliedBenefit : prd.selectedDoubleCoupon.dscRt;
-          }
           prd.selPrcAppliedBenefit -= prd.doubleBenefit;
 
           this.applyBasketCoupons();
         })
+      },
+      calculateBenefit: function(selPrc, coupon) {
+        let benefit = 0;
+        if (coupon.cpnType === '01') {
+          benefit += selPrc * coupon.dscRt / 100;
+        }
+        if (coupon.cpnType === '02') {
+          benefit += coupon > selPrc ? selPrc : coupon.dscRt;
+        }
+        return benefit;
       },
       applyBasketCoupons: function() {
         this.basketCouponBenefit = 0;
@@ -264,6 +338,10 @@ export default {
     },
     created: function() {
       this.settingProductCoupons();
+
+      // this.getCombinations(2,2);
+      // this.getPermutations(2,2);
+      this.getPermutationsForProduct(2, 2, 'S');
     },
     updated: function() {
     }

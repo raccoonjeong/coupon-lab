@@ -144,6 +144,7 @@ export default {
       }
     },
     methods: {
+      // https://herong.tistory.com/entry/CaseOfNumber-%EC%A1%B0%ED%95%A9-%EC%A4%91%EB%B3%B5%EC%A1%B0%ED%95%A9
       countCaseNumber: function() {
         
         const N1 = this.singleCoupons.length + 1;

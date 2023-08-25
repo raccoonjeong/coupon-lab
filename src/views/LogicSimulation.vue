@@ -34,11 +34,11 @@ export default {
         calc: Number.MAX_SAFE_INTEGER
         };
 
-      for(let i = 0; i < result.length; i ++) {
-        if (result[i].calc < minObj[0].calc) {
-          minObj.shift(result[i])
-        }
-      }
+      // for(let i = 0; i < result.length; i ++) {
+      //   if (result[i].calc < minObj[0].calc) {
+      //     minObj.shift(result[i])
+      //   }
+      // }
 
       console.log(minObj)
     }

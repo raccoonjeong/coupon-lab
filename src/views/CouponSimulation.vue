@@ -147,22 +147,30 @@ export default {
       // https://herong.tistory.com/entry/CaseOfNumber-%EC%A1%B0%ED%95%A9-%EC%A4%91%EB%B3%B5%EC%A1%B0%ED%95%A9
       countCaseNumber: function() {
         
-        const N1 = this.singleCoupons.length + 1;
-        const N2 = this.doubleCoupons.length + 1;
-        const N3 = this.basketCoupons.length + 1;
-        const R = this.products.length;
+        // const N1 = this.singleCoupons.length + 1;
+        // const N2 = this.doubleCoupons.length + 1;
+        // const N3 = this.basketCoupons.length + 1;
+        // const R = this.products.length;
 
-        // const N1 = 5;
-        // const N2 = 5;
-        // const N3 = 5;
-        // const R = 5;
-
+        const N1 = 2;
+        const N2 = 5;
+        const N3 = 5;
+        const R = 4;
+        // N: 쿠폰 수 / R: 상품 수
         const countPermutationsOrCombinations = function(N, R) {
           if (N < R) {
-            return countPermutations(R, N); // 물건 3개중 쿠폰 먹일 2개를 뽑아서 나열 (순서가 있음. 123 != 321).. 후에 x 2를 해야 하지 않을까..?
+            return countPermutationsLoop(R, N); // 물건 3개중 쿠폰 먹일 물건 2개, 1개, 0개를 뽑 (순서가 있음. 123 != 321).. 후에 x 쿠폰2장
           } else {
             return countPermutations(N, R); // 쿠폰 3장중 물건에 적용할 2장을 뽑아서 나열 (순서가 있음. 123 != 321)
           }
+        }
+
+        const countPermutationsLoop = function(N, R) {
+          let result = 0;
+          for(let i = 0; i <= R; i++) {
+            result += countPermutations(N, i);
+          }
+          return result;
         }
 
         // const countCombinations = function(N, R) {
@@ -183,6 +191,8 @@ export default {
           }
           return number * factorial(number - 1);
         }
+        
+        console.log(countPermutationsOrCombinations(N1, R));
 
         this.caseNumber = countPermutationsOrCombinations(N1, R) * countPermutationsOrCombinations(N2, R) * factorial(N3);
       },

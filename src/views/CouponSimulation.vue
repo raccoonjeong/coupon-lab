@@ -403,8 +403,11 @@ export default {
     },
     created: function() {
       this.settingProductCoupons();
+      let start = new Date()
       this.getCaseForProduct(this.singleCoupons.length, this.products.length, 'S');
+      let end = new Date();
       console.log('getCaseForProduct COUNT: ' + this.caseCount);
+      console.log(end-start);
     },
     updated: function() {
     }

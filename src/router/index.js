@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
-import CouponSimulation from '../views/CouponSimulation.vue'
+import CouponSimulationTest from '../views/CouponSimulationTest.vue'
 import LogicSimulation from '../views/LogicSimulation.vue'
 import DiscountSimulation from '../views/DiscountSimulation.vue'
 
@@ -19,9 +19,9 @@ const routes = [
     component: () => import(/* webpackChunkName: "about" */ '../views/AboutView.vue')
   },
   {
-    path: '/coupon-simulation',
-    name: 'couponSimulation',
-    component: CouponSimulation
+    path: '/coupon-simulation-test',
+    name: 'couponSimulationTest',
+    component: CouponSimulationTest
   },
   {
     path: '/logic-simulation',

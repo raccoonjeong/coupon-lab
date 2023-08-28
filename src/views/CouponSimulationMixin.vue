@@ -1,56 +1,57 @@
-<template>
-  <div>
-    <h1>쿠폰 시뮬레이션</h1>
-    <div v-for="prd in products" :key="prd.prdNo">
-      <h3>{{ prd.prdNm }}</h3> 판매가: {{ prd.selPrc }} ||| 
-      단수쿠폰: 
-      <select v-model="prd.selectedSigleCoupon" @change="applyCoupons">
-        <option v-for="cpn in prd.productSingleCoupons" :key="cpn.cpnNo" :value="cpn" :disabled="cpn.cpnNo > 0 && cpn.selected">
-          {{ cpn.cpnNm }}
-        </option>
-      </select>
-      ||| 
-      복수쿠폰: 
-      <select v-model="prd.selectedDoubleCoupon" @change="applyCoupons">
-        <option v-for="cpn in prd.productDoubleCoupons" :key="cpn.cpnNo" :value="cpn" :disabled="cpn.cpnNo > 0 && cpn.selected">
-          {{ cpn.cpnNm }} 
-        </option>
-      </select>
-      ||| 
-      할인혜택: 
-      {{ prd.singleBenefit + prd.doubleBenefit }}
-    </div>
-    <hr>
-    <div>
-      장바구니쿠폰: 
-      <select v-model="selectedBasketCoupon" @change="applyCoupons">
-        <option v-for="cpn in basketCoupons" :key="cpn.cpnNo" :value="cpn">
-          {{ cpn.cpnNm }}
-        </option>
-      </select>
-      |||
-      할인혜택  
-      {{ basketCouponBenefit }}
-    </div>
-    <hr>
-    <h3>할인가 합계</h3>
-    {{ totalPrcAppliedBenefit }}
-    <h3>혜택 합계</h3>
-    {{ totalBenefit }}
-    <hr>
-    <button @click="countCaseNumber">경우의 수 구하기!</button>
-    {{ caseNumber }}
-    <hr>
-    <button>쿠폰 시뮬레이션!</button>
-  </div>
-</template>
-
+<!--
+// <template>
+//   <div>
+//     <h1>쿠폰 시뮬레이션</h1>
+//     <div v-for="prd in products" :key="prd.prdNo">
+//       <h3>{{ prd.prdNm }}</h3> 판매가: {{ prd.selPrc }} ||| 
+//       단수쿠폰: 
+//       <select v-model="prd.selectedSigleCoupon" @change="applyCoupons">
+//         <option v-for="cpn in prd.productSingleCoupons" :key="cpn.cpnNo" :value="cpn" :disabled="cpn.cpnNo > 0 && cpn.selected">
+//           {{ cpn.cpnNm }}
+//         </option>
+//       </select>
+//       ||| 
+//       복수쿠폰: 
+//       <select v-model="prd.selectedDoubleCoupon" @change="applyCoupons">
+//         <option v-for="cpn in prd.productDoubleCoupons" :key="cpn.cpnNo" :value="cpn" :disabled="cpn.cpnNo > 0 && cpn.selected">
+//           {{ cpn.cpnNm }} 
+//         </option>
+//       </select>
+//       ||| 
+//       할인혜택: 
+//       {{ prd.singleBenefit + prd.doubleBenefit }}
+//     </div>
+//     <hr>
+//     <div>
+//       장바구니쿠폰: 
+//       <select v-model="selectedBasketCoupon" @change="applyCoupons">
+//         <option v-for="cpn in basketCoupons" :key="cpn.cpnNo" :value="cpn">
+//           {{ cpn.cpnNm }}
+//         </option>
+//       </select>
+//       |||
+//       할인혜택  
+//       {{ basketCouponBenefit }}
+//     </div>
+//     <hr>
+//     <h3>할인가 합계</h3>
+//     {{ totalPrcAppliedBenefit }}
+//     <h3>혜택 합계</h3>
+//     {{ totalBenefit }}
+//     <hr>
+//     <button @click="countCaseNumber">(쿠폰 조건 생각 안하고)최대 경우의 수 계산하기!</button>
+//     {{ caseNumber }}
+//     <hr>
+//     <button @click="couponSimulaion">쿠폰 시뮬레이션!</button>
+//   </div>
+// </template>
+-->
 <script>
 export default {
-    name: 'CouponSimulation',
+    name: 'CouponSimulationMixin',
     computed: {
       totalPrcAppliedBenefit: function() {
-        return this.products.map(prd => prd.selPrcAppliedBenefit).reduce((a, b) => a + b) - this.basketCouponBenefit;
+        return this.products.length > 0 ? this.products.map(prd => prd.selPrcAppliedBenefit).reduce((a, b) => a + b) - this.basketCouponBenefit : 0;
       }
     },
     data: function() {
@@ -208,17 +209,28 @@ export default {
         // N: 쿠폰 수 / R: 상품 수
         const countCase = function(N, R) {
           if (N < R) {
-            return countCaseWhenRGrater(R, N); // 물건 3개중 쿠폰 먹일 물건 2개, 1개, 0개를 뽑 (순서가 있음. 123 != 321)..
+            return countCaseWhenRGrater(R, N); // R, N 주의
           } else {
             return countCaseWhenNGrater(N, R);
           }
         }
 
+        // N: 쿠폰 수 / R: 상품 수
         const countCaseWhenNGrater = function(N, R) {
+          // 쿠폰의 수가 상품의 수보다 더 클 때
+          // 쿠폰목록에서 상품 수 만큼 중복없이 쿠폰을 골라내는 배열의 수
+          // "쿠폰선택안함"의 경우는 중복이 가능해야함
+          // 중복 없는 순열 + 중복 있는 순열에서 "쿠폰선택안함"의 경우가 중복을 차지하는 경우
+          // nPr + (n∏r - nPr) / n
           return countPermutations(N, R) + (countDoublePermutaions(N,R) - countPermutations(N, R)) / N;
         }
 
+        // N: 상품 수 / R: 쿠폰 수
         const countCaseWhenRGrater = function(N, R) {
+          // 쿠폰의 수가 상품의 수보다 더 적을 때 
+          // 순열만으로 계산이 불가능하므로 조합 활용하여 계산.
+          // 거꾸로 생각한다.
+          // 상품목록에서 적용할 쿠폰 수 만큼 중복없이 상품을 골라내는 배열의 수 X 적용할 쿠폰의 순열
           let result = 0;
           for(let i = 0; i <= R; i++) {
             result += (countCombinations(N, i) * countPermutations(R, i));
@@ -421,8 +433,16 @@ export default {
         this.totalBenefit += this.basketCouponBenefit;
       },
       applyProductCoupons: function() {
-        this.singleCoupons.forEach(cpn => cpn.selected = false);
-        this.doubleCoupons.forEach(cpn => cpn.selected = false);
+        this.singleCoupons.forEach(cpn => { 
+          if (cpn.cpnNo > 0) {
+            cpn.selected = false;
+          }
+        });
+        this.doubleCoupons.forEach(cpn => { 
+          if (cpn.cpnNo > 0) {
+            cpn.selected = false;
+          }
+        });
         this.products.forEach(prd => {
           prd.singleBenefit = 0;
           prd.doubleBenefit = 0;
@@ -430,8 +450,15 @@ export default {
         })
 
         this.products.forEach(prd => {
-          prd.selectedSigleCoupon.selected = true;
-          prd.selectedDoubleCoupon.selected = true;
+          console.log(prd.selectedSigleCoupon);
+          if (prd.selectedSigleCoupon.cpnNo > 0){
+            prd.selectedSigleCoupon.selected = true;
+          }
+          if (prd.selectedDoubleCoupon.cpnNo > 0){
+            prd.selectedDoubleCoupon.selected = true;
+          }
+
+          console.log(prd.selectedSigleCoupon);
 
           prd.singleBenefit = this.calculateBenefit(prd.selPrc, prd.selectedSigleCoupon);
           prd.doubleBenefit = this.calculateBenefit(prd.selPrcAppliedBenefit, prd.selectedDoubleCoupon);
@@ -464,7 +491,10 @@ export default {
         return benefit;
       },
       settingProductCoupons: function() {
+        console.log(this.singleCoupons);
         this.products.forEach(prd => { 
+          prd.productSingleCoupons = [];
+          prd.productDoubleCoupons = [];
           this.singleCoupons.forEach(
             cpn => { 
               if (cpn.cpnNo == 0 || cpn.targetProductNos.includes(prd.prdNo)) {
@@ -478,17 +508,19 @@ export default {
               }
           });
         });
-       
+      },
+      couponSimulaion: function() {
+        let start = new Date()
+        this.getCaseForProduct(this.singleCoupons.length, this.products.length, 'S');
+        this.settingMaxBenefitCoupon();
+        let end = new Date();
+        console.log('getCaseForProduct COUNT: ' + this.caseCount);
+        console.log(end-start);
       }
     },
     created: function() {
       this.settingProductCoupons();
-      let start = new Date()
-      this.getCaseForProduct(this.singleCoupons.length, this.products.length, 'S');
-      this.settingMaxBenefitCoupon();
-      let end = new Date();
-      console.log('getCaseForProduct COUNT: ' + this.caseCount);
-      console.log(end-start);
+      
     },
     updated: function() {
     }

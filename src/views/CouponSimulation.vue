@@ -4,14 +4,14 @@
     <div v-for="prd in products" :key="prd.prdNo">
       <h3>{{ prd.prdNm }}</h3> 판매가: {{ prd.selPrc }} ||| 
       단수쿠폰: 
-      <select v-model="prd.selectedSigleCoupon" @change="applyProductCoupons">
+      <select v-model="prd.selectedSigleCoupon" @change="applyCoupons">
         <option v-for="cpn in prd.productSingleCoupons" :key="cpn.cpnNo" :value="cpn" :disabled="cpn.cpnNo > 0 && cpn.selected">
           {{ cpn.cpnNm }}
         </option>
       </select>
       ||| 
       복수쿠폰: 
-      <select v-model="prd.selectedDoubleCoupon" @change="applyProductCoupons">
+      <select v-model="prd.selectedDoubleCoupon" @change="applyCoupons">
         <option v-for="cpn in prd.productDoubleCoupons" :key="cpn.cpnNo" :value="cpn" :disabled="cpn.cpnNo > 0 && cpn.selected">
           {{ cpn.cpnNm }} 
         </option>
@@ -23,7 +23,7 @@
     <hr>
     <div>
       장바구니쿠폰: 
-      <select v-model="selectedBasketCoupon" @change="applyBasketCoupons">
+      <select v-model="selectedBasketCoupon" @change="applyCoupons">
         <option v-for="cpn in basketCoupons" :key="cpn.cpnNo" :value="cpn">
           {{ cpn.cpnNm }}
         </option>
@@ -33,8 +33,10 @@
       {{ basketCouponBenefit }}
     </div>
     <hr>
-    <h3>합계</h3>
+    <h3>할인가 합계</h3>
     {{ totalPrcAppliedBenefit }}
+    <h3>혜택 합계</h3>
+    {{ totalBenefit }}
     <hr>
     <button @click="countCaseNumber">경우의 수 구하기!</button>
     {{ caseNumber }}
@@ -67,7 +69,9 @@ export default {
             doubleBenefit: 0,
             selPrcAppliedBenefit: 1000,
             selectedSigleCoupon: {},
-            selectedDoubleCoupon: {}
+            selectedDoubleCoupon: {},
+            simulatedSingleCoupon: {},
+            simulatedDoubleCoupon: {}
           },
           {
             prdNo: 2,
@@ -79,7 +83,9 @@ export default {
             doubleBenefit: 0,
             selPrcAppliedBenefit: 2000,
             selectedSigleCoupon: {},
-            selectedDoubleCoupon: {}
+            selectedDoubleCoupon: {},
+            simulatedSingleCoupon: {},
+            simulatedDoubleCoupon: {}
           },
           {
             prdNo: 3,
@@ -91,7 +97,9 @@ export default {
             doubleBenefit: 0,
             selPrcAppliedBenefit: 2500,
             selectedSigleCoupon: {},
-            selectedDoubleCoupon: {}
+            selectedDoubleCoupon: {},
+            simulatedSingleCoupon: {},
+            simulatedDoubleCoupon: {}
           }
         ],
         // 자동적용쿠폰도 고려해야함, 적용 무제한임
@@ -178,7 +186,10 @@ export default {
           },
         ],
         basketCouponBenefit: 0,
-        selectedBasketCoupon: {}
+        selectedBasketCoupon: {},
+        simulatedBasketCoupon: {},
+        totalBenefit: 0,
+        maxBenefit: 0,
       }
     },
     methods: {
@@ -197,7 +208,7 @@ export default {
         // N: 쿠폰 수 / R: 상품 수
         const countCase = function(N, R) {
           if (N < R) {
-            return countCaseWhenRGrater(R, N); // 물건 3개중 쿠폰 먹일 물건 2개, 1개, 0개를 뽑 (순서가 있음. 123 != 321).. 후에 x 쿠폰2장
+            return countCaseWhenRGrater(R, N); // 물건 3개중 쿠폰 먹일 물건 2개, 1개, 0개를 뽑 (순서가 있음. 123 != 321)..
           } else {
             return countCaseWhenNGrater(N, R);
           }
@@ -293,18 +304,24 @@ export default {
         console.log('permutate count: ' + count);
       },
       getCaseForProduct: function(N, R, step) {
+        // DFS 알고리즘 활용하여 경우의 수 구함
         console.log('step ' + step + ' start!!!!')
         let visit = []; // N개 ? 쿠폰 수?
         for (let i = 0; i < N; i++) {
           visit.push(false);
         }
-        const factorial = () => {
+        const arrange = () => {
           for(let i = 0; i < this.basketCoupons.length; i++) {
-            this.caseCount++;
-            this.selectedBasketCoupon = this.basketCoupons[i];
-            console.log('단수쿠폰:' + this.products.map(prd => prd.selectedSigleCoupon.cpnNm));
-            console.log('  복수쿠폰:' + this.products.map(prd => prd.selectedDoubleCoupon.cpnNm));
-            console.log('    장바구니쿠폰:' + this.selectedBasketCoupon.cpnNm);
+            if (this.isAvailableCoupon('B', this.basketCoupons[i])) {
+              this.selectedBasketCoupon = this.basketCoupons[i];
+              this.caseCount++;            
+              console.log('단수쿠폰:' + this.products.map(prd => prd.selectedSigleCoupon.cpnNm));
+              console.log('  복수쿠폰:' + this.products.map(prd => prd.selectedDoubleCoupon.cpnNm));
+              console.log('    장바구니쿠폰:' + this.selectedBasketCoupon.cpnNm);
+              this.applyCoupons();
+              this.findMaxBenefit();
+              console.log('--------------------------------------')
+            }
           }
         }
         const permutate = (N, R, depth, step) => {
@@ -314,43 +331,107 @@ export default {
             }
             if (step === 'D') {
               console.log('==================');
-              factorial();  
+              arrange();  
             }
             return;
           }
 
           for (let i = 0; i < N; i++) {
               if (visit[i] == false) {
-                  visit[i] = true;
                   if (step === 'S') {
-                    if (this.singleCoupons[i].cpnNo === 0) {
-                      visit[i] = false;
+                    
+                    if (!this.isAvailableCoupon('S', this.singleCoupons[i], [this.products[depth]])) {
+                      continue;
                     }
-                    console.log(depth);
+                    if (this.singleCoupons[i].cpnNo > 0) {
+                      visit[i] = true; // cpnNo == 0(선택안함)일때는 중복 가능하므로 visit[i] = false 유지한다.
+                    }
                     this.products[depth].selectedSigleCoupon = this.singleCoupons[i];
                   }
                   if (step === 'D') {
-                    if (this.doubleCoupons[i].cpnNo === 0) {
-                      visit[i] = false;
+                    if (!this.isAvailableCoupon('D', this.doubleCoupons[i], [this.products[depth]])) {
+                      continue;
+                    }
+                     if (this.doubleCoupons[i].cpnNo > 0) {
+                      visit[i] = true; // cpnNo == 0(선택안함)일때는 중복 가능하므로 visit[i] = false 유지한다.
                     }
                     this.products[depth].selectedDoubleCoupon = this.doubleCoupons[i];
                   }
-                  permutate(N, R, depth + 1, step);
+                  permutate(N, R, depth + 1, step); // 다음 상품으로 넘어간다.
+                  console.log('************************');
                   visit[i] = false;
               }
           }
         }
         permutate(N, R, 0, step);
       },
+      isAvailableCoupon: function(type, coupon, products = this.products) {
+        if (coupon.cpnNo === 0) {
+          return true;
+        }
+
+        if (type === 'S') {
+          // 상품 단수쿠폰
+          if (products[0].productSingleCoupons.map(cpn => cpn.cpnNo).includes(coupon.cpnNo)) {
+            return true;
+          }
+        }
+        if (type === 'D') {
+          // 상품 복수쿠폰
+          if (products[0].productDoubleCoupons.map(cpn => cpn.cpnNo).includes(coupon.cpnNo)) {
+            return true;
+          }
+        }
+        if (type === 'B') {
+          // 장바구니 쿠폰
+          return true;
+        }
+        return false;
+      },
+      applyCoupons: function() {
+        this.applyProductCoupons();
+        this.applyBasketCoupons();
+        this.showTotalBenefit();
+      },
+      settingMaxBenefitCoupon: function() {
+          this.products.forEach(prd => {
+            prd.selectedSigleCoupon = prd.simulatedSingleCoupon;
+            prd.selectedDoubleCoupon = prd.simulatedDoubleCoupon;
+          });
+          this.selectedBasketCoupon = this.simulatedBasketCoupon;
+          this.applyCoupons();
+      },
+      findMaxBenefit: function() {
+        if (this.maxBenefit < this.totalBenefit) {
+          this.products.forEach(prd => {
+            prd.simulatedSingleCoupon = prd.selectedSigleCoupon;
+            prd.simulatedDoubleCoupon = prd.selectedDoubleCoupon;
+          });
+          this.simulatedBasketCoupon = this.selectedBasketCoupon;
+
+          this.maxBenefit = this.totalBenefit;
+          console.log('이시점 최고혜택!!!');
+        }
+        if (this.maxBenefit == this.totalBenefit) {
+          // 쿠폰 우선순위에 따라 처리,,,??
+        }
+      },
+      showTotalBenefit: function() {
+        this.totalBenefit = this.products.map(prd => prd.singleBenefit + prd.doubleBenefit).reduce((a, b) => a + b);
+        this.totalBenefit += this.basketCouponBenefit;
+      },
       applyProductCoupons: function() {
         this.singleCoupons.forEach(cpn => cpn.selected = false);
         this.doubleCoupons.forEach(cpn => cpn.selected = false);
+        this.products.forEach(prd => {
+          prd.singleBenefit = 0;
+          prd.doubleBenefit = 0;
+          prd.selPrcAppliedBenefit = prd.selPrc;
+        })
 
         this.products.forEach(prd => {
           prd.selectedSigleCoupon.selected = true;
           prd.selectedDoubleCoupon.selected = true;
-
-          prd.selPrcAppliedBenefit = prd.selPrc;
 
           prd.singleBenefit = this.calculateBenefit(prd.selPrc, prd.selectedSigleCoupon);
           prd.doubleBenefit = this.calculateBenefit(prd.selPrcAppliedBenefit, prd.selectedDoubleCoupon);
@@ -358,18 +439,8 @@ export default {
           prd.selPrcAppliedBenefit -= prd.singleBenefit;
           prd.selPrcAppliedBenefit -= prd.doubleBenefit;
 
-          this.applyBasketCoupons();
         })
-      },
-      calculateBenefit: function(selPrc, coupon) {
-        let benefit = 0;
-        if (coupon.cpnType === '01') {
-          benefit += selPrc * coupon.dscRt / 100;
-        }
-        if (coupon.cpnType === '02') {
-          benefit += coupon > selPrc ? selPrc : coupon.dscRt;
-        }
-        return benefit;
+
       },
       applyBasketCoupons: function() {
         this.basketCouponBenefit = 0;
@@ -381,7 +452,16 @@ export default {
         if (this.selectedBasketCoupon.cpnType === '02') {
           this.basketCouponBenefit = this.selectedBasketCoupon.dscRt > this.totalPrcAppliedBenefit ? this.totalPrcAppliedBenefit : this.selectedBasketCoupon.dscRt;
         }
-
+      },
+      calculateBenefit: function(selPrc, coupon) {
+        let benefit = 0;
+        if (coupon.cpnType === '01') {
+          benefit += selPrc * coupon.dscRt / 100;
+        }
+        if (coupon.cpnType === '02') {
+          benefit += coupon > selPrc ? selPrc : coupon.dscRt;
+        }
+        return benefit;
       },
       settingProductCoupons: function() {
         this.products.forEach(prd => { 
@@ -405,6 +485,7 @@ export default {
       this.settingProductCoupons();
       let start = new Date()
       this.getCaseForProduct(this.singleCoupons.length, this.products.length, 'S');
+      this.settingMaxBenefitCoupon();
       let end = new Date();
       console.log('getCaseForProduct COUNT: ' + this.caseCount);
       console.log(end-start);

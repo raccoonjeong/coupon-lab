@@ -52,6 +52,9 @@ export default {
     computed: {
       totalPrcAppliedBenefit: function() {
         return this.products.length > 0 ? this.products.map(prd => prd.selPrcAppliedBenefit).reduce((a, b) => a + b) - this.basketCouponBenefit : 0;
+      },
+      totalSelPrc: function() {
+        return this.products.length > 0 ? this.products.map(prd => prd.selPrc).reduce((a, b) => a + b) : 0;
       }
     },
     data: function() {
@@ -413,6 +416,7 @@ export default {
             prd.selectedDoubleCoupon = prd.simulatedDoubleCoupon;
           });
           this.selectedBasketCoupon = this.simulatedBasketCoupon;
+          this.maxBenefit = 0;
           this.applyCoupons();
       },
       findMaxBenefit: function() {
@@ -424,7 +428,7 @@ export default {
           this.simulatedBasketCoupon = this.selectedBasketCoupon;
 
           this.maxBenefit = this.totalBenefit;
-          console.log('이시점 최고혜택!!!');
+          console.log('이시점 최고혜택!!!:' + this.maxBenefit);
         }
         if (this.maxBenefit === this.totalBenefit) {
           // 쿠폰 우선순위에 따라 처리,,,??

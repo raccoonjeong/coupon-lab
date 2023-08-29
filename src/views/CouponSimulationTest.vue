@@ -1,13 +1,12 @@
 <template>
   <div>
-    <button @click="deleteAll">상품/쿠폰 모두 삭제</button>
-    <h1>쿠폰 시뮬레이션</h1>
-    <h2>새로고침하면 데이터가 모두 삭제됩니다.</h2>
+    <h1>💳💰💎💸🎟️🎫쿠폰 시뮬레이션🎫🎟️💸💎💰💳</h1>
+    <h2>⚠️새로고침하면 데이터가 모두 삭제됩니다.⚠️</h2>
     <div style="display: flex; flex-direction: row">
     <div class="container1" style="width: 50%">
-      <h2>상품목록</h2>
+      <h2>상품목록(주문서 개념)</h2>
       <div v-for="prd in products" :key="prd.prdNo">
-        <h3>{{ prd.prdNo }}.{{ prd.prdNm }}</h3> 판매가: {{ prd.selPrc }} ||| 
+        <h3>{{ prd.prdNo }}.{{ prd.prdNm }}({{ prd.selPrc }}원)</h3> 판매가합: {{ prd.selPrc * prd.qty }} ||| 
         단수쿠폰: 
         <select v-model="prd.selectedSigleCoupon" @change="applyCoupons">
           <option v-for="cpn in prd.productSingleCoupons" :key="cpn.cpnNo" :value="cpn" :disabled="cpn.cpnNo > 0 && cpn.selected">
@@ -38,15 +37,12 @@
         {{ basketCouponBenefit }}
       </div>
       <hr>
-      <h3>할인가 합계</h3>
-      {{ totalPrcAppliedBenefit }}
-      <h3>혜택 합계</h3>
-      {{ totalBenefit }}
+      판매가 합계: {{ totalSelPrc }} ||| 할인가 합계: {{ totalPrcAppliedBenefit }} ||| 혜택 합계: {{ totalBenefit }}
       <hr>
       <button @click="countCaseNumber">(쿠폰 조건 생각 안하고)최대 경우의 수 계산하기!</button>
       {{ caseNumber }}
       <hr>
-      <button @click="couponSimulaion">쿠폰 시뮬레이션!</button>
+      <button @click="couponSimulaion">쿠폰 시뮬레이션!</button> 소요시간: {{ simulationTime }} ms(밀리초)
       <hr>
       <h3>상품단수쿠폰 목록</h3>
       <div>
@@ -83,9 +79,10 @@
       </div>
     </div>
     <div class="container2" style="width: 50%">
-      <h2>상품 등록하기</h2>
-      상품명 <input type="text" v-model="inputProduct.prdNm">
-      판매가 <input type="number" v-model="inputProduct.selPrc">
+      <h2>상품 등록하기(주문 개념)</h2>
+      <div>상품명 <input type="text" v-model="inputProduct.prdNm"></div>
+      <div>판매가 <input type="number" v-model="inputProduct.selPrc"></div>
+      <div>수량 <input type="number" v-model="inputProduct.qty"></div>
       <button @click="registerProduct">상품 등록</button>
       <hr>
       <h2>쿠폰 등록하기</h2>
@@ -140,6 +137,7 @@ export default {
     mixins: [CouponSimulationMixin],
     data: function() {
         return {
+          simulationTime: 0,
           products: [],
           inputProduct: {
             prdNo: 0,
@@ -247,6 +245,7 @@ export default {
         let end = new Date();
         console.log('getCaseForProduct COUNT: ' + this.caseCount);
         console.log(end-start);
+        this.simulationTime = end-start;
       },
       // @Override
       isAvailableCoupon: function(type, coupon, products = this.products) {
@@ -264,16 +263,22 @@ export default {
               return false;
             }
           }
+          if (products[0].selPrcAppliedBenefit < this.calculateBenefit(products[0].selPrcAppliedBenefit, coupon)) {
+              return false;
+          }
         }
         if (type === 'D') {
           // 상품 복수쿠폰
           if (!products[0].productDoubleCoupons.map(cpn => cpn.cpnNo).includes(coupon.cpnNo)) {
             return false;
           }
-           if (coupon.minOrdAmtYn) {
+          if (coupon.minOrdAmtYn) {
             if (coupon.minOrdAmt > products[0].selPrcAppliedBenefit) {
               return false;
             }
+          }
+          if (products[0].selPrcAppliedBenefit < this.calculateBenefit(products[0].selPrcAppliedBenefit, coupon)) {
+              return false;
           }
         }
         // if (type === 'B') {

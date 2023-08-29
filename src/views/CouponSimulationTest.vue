@@ -2,10 +2,12 @@
   <div>
     <button @click="deleteAll">상품/쿠폰 모두 삭제</button>
     <h1>쿠폰 시뮬레이션</h1>
+    <h2>새로고침하면 데이터가 모두 삭제됩니다.</h2>
     <div style="display: flex; flex-direction: row">
     <div class="container1" style="width: 50%">
+      <h2>상품목록</h2>
       <div v-for="prd in products" :key="prd.prdNo">
-        <h3>{{ prd.prdNm }}</h3> 판매가: {{ prd.selPrc }} ||| 
+        <h3>{{ prd.prdNo }}.{{ prd.prdNm }}</h3> 판매가: {{ prd.selPrc }} ||| 
         단수쿠폰: 
         <select v-model="prd.selectedSigleCoupon" @change="applyCoupons">
           <option v-for="cpn in prd.productSingleCoupons" :key="cpn.cpnNo" :value="cpn" :disabled="cpn.cpnNo > 0 && cpn.selected">
@@ -46,27 +48,80 @@
       <hr>
       <button @click="couponSimulaion">쿠폰 시뮬레이션!</button>
       <hr>
+      <h3>상품단수쿠폰 목록</h3>
+      <div>
+        <div>
+          쿠폰명 ||| 쿠폰타입 ||| 할인율/할인액 ||| 대상상품번호
+        </div>
+      </div>
+      <div v-for="cpn in singleCoupons" :key="cpn.cpnNo">
+        <div v-if="cpn.cpnNo > 0">
+          {{ cpn.cpnNm }} ||| {{ getCouponTypes(cpn.cpnType) }} ||| {{ cpn.dscRt }} ||| {{ cpn.targetProductNos }}
+        </div>
+      </div>
+      <h3>상품복수쿠폰 목록</h3>
+      <div>
+        <div>
+          쿠폰명 ||| 쿠폰타입 ||| 할인율/할인액 ||| 대상상품번호
+        </div>
+      </div>
+      <div v-for="cpn in doubleCoupons" :key="cpn.cpnNo">
+        <div v-if="cpn.cpnNo > 0">
+          {{ cpn.cpnNm }} ||| {{ cpn.cpnType }} ||| {{ cpn.dscRt }} ||| {{ cpn.targetProductNos }}
+        </div>
+      </div>
+      <h3>장바구니쿠폰 목록</h3>
+      <div>
+        <div>
+          쿠폰명 ||| 쿠폰타입 ||| 할인율/할인액 ||| 대상상품번호
+        </div>
+      </div>
+      <div v-for="cpn in basketCoupons" :key="cpn.cpnNo">
+        <div v-if="cpn.cpnNo > 0">
+          {{ cpn.cpnNm }} ||| {{ cpn.cpnType }} ||| {{ cpn.dscRt }} ||| {{ cpn.targetProductNos }}
+        </div>
+      </div>
     </div>
     <div class="container2" style="width: 50%">
       <h2>상품 등록하기</h2>
       상품명 <input type="text" v-model="inputProduct.prdNm">
       판매가 <input type="number" v-model="inputProduct.selPrc">
       <button @click="registerProduct">상품 등록</button>
+      <hr>
       <h2>쿠폰 등록하기</h2>
       <div v-if="products.length > 0">
-        쿠폰명 <input type="text" v-model="inputCoupon.cpnNm">
-        <div>쿠폰타입 
+        <div>
+          쿠폰명 
+          <input type="text" v-model="inputCoupon.cpnNm">
+        </div>
+        <div>
+          쿠폰타입 
           <input type="radio" name="cpnType" value="01" v-model="inputCoupon.cpnType"> 정률
           <input type="radio" name="cpnType" value="02" v-model="inputCoupon.cpnType"> 정액
         </div>
-        <div>할인율(%)/할인가(원)<input type="number" v-model="inputCoupon.dscRt"></div>
-        <div>쿠폰종류 
+        <div>
+          할인율(%)/할인가(원)<input type="number" v-model="inputCoupon.dscRt"></div>
+        <div>
+          쿠폰종류 
           <input type="radio" name="cpnSpec" value="S" v-model="inputCoupon.cpnSpec"> 상품단수
           <input type="radio" name="cpnSpec" value="D" v-model="inputCoupon.cpnSpec"> 상품복수 
           <input type="radio" name="cpnSpec" value="B" v-model="inputCoupon.cpnSpec"> 장바구니
         </div>
         <div>
-        대상상품 <div v-for="(prd, idx) in products" :key="idx" ><input type="checkbox" v-model="inputCoupon.targetProductNos" :value="prd.prdNo"> {{ prd.prdNm }} </div>
+          최소주문금액 
+          <input type="checkbox" v-model="inputCoupon.minOrdAmtYn"> 최소주문금액 적용
+          <input type="text" v-model="inputCoupon.minOrdAmt" :disabled="!inputCoupon.minOrdAmtYn">원 이상 구매시 쿠폰사용 가능
+        </div>
+        <div>
+          최소주문수량 
+          <input type="checkbox" v-model="inputCoupon.minOrdQtyYn"> 최소주문수량 적용
+          <input type="text" v-model="inputCoupon.minOrdQty" :disabled="!inputCoupon.minOrdQtyYn">개 이상 구매시 쿠폰사용 가능
+        </div>
+        <div>
+          대상상품 
+          <div v-for="(prd, idx) in products" :key="idx" >
+            <input type="checkbox" v-model="inputCoupon.targetProductNos" :value="prd.prdNo"> {{ prd.prdNm }} 
+          </div>
         </div>
         <button @click="registerCoupon">쿠폰 등록</button>
       </div>
@@ -104,7 +159,8 @@ export default {
               cpnNm: '선택해주세요' 
             },
             simulatedSingleCoupon: {},
-            simulatedDoubleCoupon: {}
+            simulatedDoubleCoupon: {},
+            qty: 1,
           },
           inputProductSeq: 0,
           singleCoupons: [{ 
@@ -127,6 +183,10 @@ export default {
             targetProductNos: [],
             selected: false,
             cpnSpec: '', // S D B
+            minOrdAmtYn: false,
+            minOrdAmt: 0,
+            minOrdQtyYn: false,
+            minOrdQty: 0,
           },
           inputCouponSeq: 0,
           basketCouponBenefit: 0,
@@ -140,6 +200,12 @@ export default {
         }
     },
     methods: {
+      getCouponTypes: function(cpnType) {
+        if (cpnType === '01')
+          return '정률';
+        if (cpnType === '02')
+          return '정액';
+      },
       deleteAll: function() {
         if (confirm('모두 삭제하시겠습니까?')) { 
           this.products = this.$options.data().products;
@@ -169,7 +235,7 @@ export default {
         this.inputCoupon = this.$options.data().inputCoupon;
         this.settingProductCoupons();
       },
-      // overriding
+      // @Override
       couponSimulaion: function() {
         if (this.products.length < 1) { 
           alert('1개 이상의 상품을 먼저 등록하세요.')
@@ -181,7 +247,42 @@ export default {
         let end = new Date();
         console.log('getCaseForProduct COUNT: ' + this.caseCount);
         console.log(end-start);
-      }
+      },
+      // @Override
+      isAvailableCoupon: function(type, coupon, products = this.products) {
+        if (coupon.cpnNo === 0) {
+          return true;
+        }
+
+        if (type === 'S') {
+          // 상품 단수쿠폰
+          if (!products[0].productSingleCoupons.map(cpn => cpn.cpnNo).includes(coupon.cpnNo)) {
+            return false;
+          }
+          if (coupon.minOrdAmtYn) {
+            if (coupon.minOrdAmt > products[0].selPrcAppliedBenefit) {
+              return false;
+            }
+          }
+        }
+        if (type === 'D') {
+          // 상품 복수쿠폰
+          if (!products[0].productDoubleCoupons.map(cpn => cpn.cpnNo).includes(coupon.cpnNo)) {
+            return false;
+          }
+           if (coupon.minOrdAmtYn) {
+            if (coupon.minOrdAmt > products[0].selPrcAppliedBenefit) {
+              return false;
+            }
+          }
+        }
+        // if (type === 'B') {
+        //   // 장바구니는 하나라도 조건에 맞으면 적용되고 대상인 상품에만 비례배분되어서 적용된다.
+        //   // 장바구니 쿠폰
+        //   return true;
+        // }
+        return true;
+      },
     },
     created: function() {
 

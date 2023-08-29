@@ -349,7 +349,7 @@ export default {
           }
 
           for (let i = 0; i < N; i++) {
-              if (visit[i] == false) {
+              if (visit[i] === false) {
                   if (step === 'S') {
                     
                     if (!this.isAvailableCoupon('S', this.singleCoupons[i], [this.products[depth]])) {
@@ -359,6 +359,7 @@ export default {
                       visit[i] = true; // cpnNo == 0(선택안함)일때는 중복 가능하므로 visit[i] = false 유지한다.
                     }
                     this.products[depth].selectedSigleCoupon = this.singleCoupons[i];
+                    this.applyCoupons();
                   }
                   if (step === 'D') {
                     if (!this.isAvailableCoupon('D', this.doubleCoupons[i], [this.products[depth]])) {
@@ -368,6 +369,7 @@ export default {
                       visit[i] = true; // cpnNo == 0(선택안함)일때는 중복 가능하므로 visit[i] = false 유지한다.
                     }
                     this.products[depth].selectedDoubleCoupon = this.doubleCoupons[i];
+                    this.applyCoupons();
                   }
                   permutate(N, R, depth + 1, step); // 다음 상품으로 넘어간다.
                   console.log('************************');
@@ -424,7 +426,7 @@ export default {
           this.maxBenefit = this.totalBenefit;
           console.log('이시점 최고혜택!!!');
         }
-        if (this.maxBenefit == this.totalBenefit) {
+        if (this.maxBenefit === this.totalBenefit) {
           // 쿠폰 우선순위에 따라 처리,,,??
         }
       },
@@ -450,7 +452,6 @@ export default {
         })
 
         this.products.forEach(prd => {
-          console.log(prd.selectedSigleCoupon);
           if (prd.selectedSigleCoupon.cpnNo > 0){
             prd.selectedSigleCoupon.selected = true;
           }
@@ -458,10 +459,9 @@ export default {
             prd.selectedDoubleCoupon.selected = true;
           }
 
-          console.log(prd.selectedSigleCoupon);
 
           prd.singleBenefit = this.calculateBenefit(prd.selPrc, prd.selectedSigleCoupon);
-          prd.doubleBenefit = this.calculateBenefit(prd.selPrcAppliedBenefit, prd.selectedDoubleCoupon);
+          prd.doubleBenefit = this.calculateBenefit(prd.selPrcAppliedBenefit, prd.selectedDoubleCoupon); // todo hs: selPrc여도 되지않나?
 
           prd.selPrcAppliedBenefit -= prd.singleBenefit;
           prd.selPrcAppliedBenefit -= prd.doubleBenefit;
@@ -491,7 +491,6 @@ export default {
         return benefit;
       },
       settingProductCoupons: function() {
-        console.log(this.singleCoupons);
         this.products.forEach(prd => { 
           prd.productSingleCoupons = [];
           prd.productDoubleCoupons = [];
